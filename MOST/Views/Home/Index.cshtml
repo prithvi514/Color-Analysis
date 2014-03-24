@@ -1,0 +1,1320 @@
+﻿@{
+    ViewBag.Title = "Home Page";
+}
+<!-- <script src="/Scripts/Subsection.js"></script>-->
+<script type="text/javascript">
+    var white = new Array(255, 255, 255);
+    var black = new Array(0, 0, 0);
+    var sum = new Array();
+    var name = new Array();
+    var imageData;
+    var img;
+    var red, green, blue, pixelcolor2;
+    var pixeldata;
+    var can;
+    var temp = 0;
+    var ctx;
+    var rectang;
+    var topp;
+    var left;
+    var j = 1;
+    var line = new Array();
+    var topx, topy;
+    var right_x, right_y;
+    var left_top_x, left_top_y;
+    var left_x, left_y;
+    var scale = 0;
+    var Gscale_obj, Gscale_array;
+    //var geometric_r;
+    //var first_geometric_pixel;
+    //var first_geometric_scale;
+    var logarthmic_r;
+    var first_logarthmic_pixel;
+    var first_logarthmic_scale;
+
+    window.onload = function () {
+        var input = document.getElementById('input');
+        input.addEventListener('change', handleFiles);
+        //addColorToStorage();
+        // initDraw(document.getElementById('canvas'));
+    }
+
+    //Prithvi stuff//
+
+    function addRGBToStorage(rgb_values) {
+        localStorage.clear();
+        for (var j = 0; j < rgb_values.length; j++) {
+            var val = JSON.stringify(rgb_values[j]);
+            var key = "color" + localStorage.length;
+            localStorage.setItem(key, val);
+        }
+        populateRGBtable();
+    }
+
+    function addColorToStorage() {
+        localStorage.clear();
+        var rgbtable = document.getElementById('rgbtable');
+        rgbtable.deleteRow(0);
+        $('#rgbtable tr').each(function () {
+            var value = [];
+            for (var i = 2; i <= 5; i++) {
+                var val = $(this).find("td:nth-child(" + i + ") input").attr('value');
+                //alert(val);
+                value.push(val);
+            }
+            var val = JSON.stringify(value);
+            var key = "color" + localStorage.length;
+            //alert(val);
+            localStorage.setItem(key, val);
+        });
+        populateRGBtable();
+    }
+
+    function populateRGBtable() {
+        var rgb = new Array();
+        sum = new Array();
+        name = new Array();
+        $('#rgbtable').empty();
+        var header = "<tr><th>Select</th><th>Name</th><th>Red</th><th>Green</th><th>Blue</th></tr>";
+        $('#rgbtable').append(header);
+        var localStorageArray = new Array();
+        for (var i = 0; i < localStorage.length; i++) {
+            localStorageArray.push(localStorage.key(i));
+        }
+        var sortedArray = localStorageArray;//.sort();
+        for (var i = 0; i < sortedArray.length; i++) {
+            //localStorageArray[i] = localStorage.key(i)+localStorage.getItem(localStorage.key(i));
+            var key = sortedArray[i];
+            if (key.substring(0, 5) == "color") {
+                var value = JSON.parse(localStorage.getItem(key));
+                var rgbvalue = "<tr><td><input type=\"checkbox\" name=\"rgb_checkbox\" value=" + key + "></td><td><input type=\"text\" class=\"rgbvalues\" value=" + value[0] + "></td><td><input type=\"text\" class=\"rgbvalues\" value=" + value[1] + "></td><td><input type=\"text\" class=\"rgbvalues\" value=" + value[2] + "></td><td><input type=\"text\" class=\"rgbvalues\" value=" + value[3] + "></td><td><input type=\"text\" style=\"background-color:rgb(" + value[1] + "," + value[2] + "," + value[3] + ")\" disabled></td></tr>";
+                $('#rgbtable tr:last').after(rgbvalue);
+                //rgb.push(value);
+                var rt = "[" + value[1] + "," + value[2] + "," + value[3] + "]";
+                var facies = "[" + value[0] + "]";
+                name.push(facies);
+                sum.push(rt);
+            }
+        }
+        //alert(rgb[1]);
+        //var sortedArray = localStorageArray.sort();
+        //alert(sortedArray);
+
+
+        $('tr').find('input[type="text"]').prop('disabled', true);
+    }
+
+    function editTable() {
+        $('tr').find('input[type="text"]').prop('disabled', false);
+    }
+
+    function saveTable() {
+        addColorToStorage();
+
+    }
+
+    function addNewColor() {
+        var newrgb = "<tr><td><input type=\"checkbox\" name=\"rgb_checkbox\" value=\"\"></td><td><input type=\"text\" class=\"rgbvalues\" value=\" \"></td><td><input type=\"text\" class=\"rgbvalues\" value=\" \"></td><td><input type=\"text\" class=\"rgbvalues\" value=\" \"></td><td><input type=\"text\" class=\"rgbvalues\" value=\" \"></td></tr>";
+        $('#rgbtable').append(newrgb);
+    }
+
+    function deleteColor() {
+        $("input:checked").each(function () {
+            var test = $(this).val();
+            //alert(test);
+            localStorage.removeItem(test);
+            populateRGBtable();
+        });
+    }
+
+
+
+
+    function initDraw() {
+        temp = 0;
+        if (j != 1) {
+            ctx.drawImage(img, 0, 0);
+        }
+        var canvas = document.getElementById('canvas');
+        rect = {};
+        drag = false;
+        temp = 0;
+        var x1 = 0;
+        var y1 = 0;
+        var x2 = 0;
+        var y2 = 0;
+        var w, h;
+        $(document).on('mousedown', '#canvas', function (e) {
+            if (temp == 0) {
+                sessionStorage.x1 = e.pageX - ($('#canvas').offset().left);
+                sessionStorage.y1 = e.pageY - ($('#canvas').offset().top);
+                drag = true;
+                //temp = 1;
+            }
+        });
+        $(document).on('mouseup', function (e) {
+            //   alert(e.pageX);
+            if (temp == 0) {
+                sessionStorage.x2 = e.pageX - ($('#canvas').offset().left);
+                sessionStorage.y2 = e.pageY - ($('#canvas').offset().top);
+                w = sessionStorage.x2 - sessionStorage.x1;
+                h = sessionStorage.y2 - sessionStorage.y1;
+                ctx.fillStyle = 'rgba(0,0,0,0.1)';
+                ctx.strokeRect(sessionStorage.x1, sessionStorage.y1, w, h);
+                temp = 1;
+                rectang = [sessionStorage.x1, sessionStorage.y1, sessionStorage.x2, sessionStorage.y2];
+                select_startWorker();
+                drag = false;
+            }
+        });
+        $(document).on('mousemove', function (e) {
+            if (drag) {
+                sessionStorage.x2 = e.pageX - ($('#canvas').offset().left);
+                sessionStorage.y2 = e.pageY - ($('#canvas').offset().top);
+            }
+        });
+        j++;
+    }
+
+    function clearRegion() {
+        ctx.drawImage(img, 0, 0);
+        //   temp = 0;
+    }
+    function array_compare(a, b) {
+        if (a.length != b.length)
+            return false;
+        for (i = 0; i < a.length; i++)
+            if (a[i] != b[i])
+                return false;
+        return true;
+    }
+    var w;
+    function startWorker() {
+        var i = 0;
+        var per = new Array();
+        var percentage = new Array(sum.length);
+        for (var u = 0; u < percentage.length; u++) {
+            percentage[u] = 0;
+        }
+
+        for (var i = topy; i < img.height; i++) {
+
+            red = pixeldata[((img.width * i) + topx) * 4];
+            green = pixeldata[((img.width * i) + topx) * 4 + 1];
+            blue = pixeldata[((img.width * i) + topx) * 4 + 2];
+            //var rt = red + (2 * green) + (3 * blue);
+            var rt = [red, green, blue];
+            rt = JSON.stringify(rt);
+            var a = sum.indexOf(rt);
+            if (a != -1) {
+                percentage[a]++;
+            }
+
+        }
+        // results = percentage;
+        var total = 0;
+        for (var i = 0; i < percentage.length; i++) {
+            total = total + percentage[i];
+            per.push(percentage[i]);
+        }
+        $('#results').empty();
+        $('#results').append("<table id=\"results_table\" border=\"1\"><tr><th>Name</th><th>Percentage</th></tr>");
+        for (var i = 0; i < per.length; i++) {
+            $('#results_table').append("<tr><td>" + name[i].replace(/[\[\]']+/g, '') + "</td><td>" + 100 * (per[i] / total) + "</td></tr>");
+        }
+        $('#results').append("</table>");
+        $('#analyze_results_export').prop('disabled', false);
+        
+    }
+    function select_startWorker() {
+        var i = 0;
+        var per = new Array();
+        var percentage = new Array(sum.length);
+        for (var u = 0; u < percentage.length; u++) {
+            percentage[u] = 0;
+        }
+        // alert(rectang[0] +""+rectang[1]+"" +rectang[2]+""+rectang[3]);
+        for (var i = Math.floor(rectang[1]) ; i < rectang[3]; i++) {
+            for (var j = Math.floor(rectang[0]) ; j < rectang[2]; j++) {
+                red = pixeldata[((img.width * i) + j) * 4];
+                green = pixeldata[((img.width * i) + j) * 4 + 1];
+                blue = pixeldata[((img.width * i) + j) * 4 + 2];
+                //var rt = red + (2 * green) + (3 * blue);
+                var rt = [red, green, blue];
+                rt = JSON.stringify(rt);
+                var a = sum.indexOf(rt);
+                if (a != -1) {
+                    percentage[a]++;
+                }
+            }
+        }
+        // results = percentage;
+        var total = 0;
+        for (var i = 0; i < percentage.length; i++) {
+            total = total + percentage[i];
+            per.push(percentage[i]);
+        }
+        $('#results').empty();
+        $('#results').append("<table border=\"1\"><tr><th>Name</th><th>Value</th></tr>");
+        for (var i = 0; i < per.length; i++) {
+            $('#results').append("<tr><td>" + name[i] + "</td><td>" + 100 * (per[i] / total) + "</td></tr>");
+        }
+        $('#results').append("</table>");
+    }
+
+    function highest_left() {
+        looping:
+            for (var y = 0; y < img.width; y++) {
+                for (var x = topy; x < img.height ; x++) {
+                    red = pixeldata[((img.width * x) + y) * 4];
+                    green = pixeldata[((img.width * x) + y) * 4 + 1];
+                    blue = pixeldata[((img.width * x) + y) * 4 + 2];
+                    alpha = pixeldata[((img.width * x) + y) * 4 + 3];
+                    pixelcolor2 = new Array(red, green, blue);
+                    if (!array_compare(pixelcolor2, white)) {
+                        if (!array_compare(pixelcolor2, black)) {
+                            //  alert("left:"+x + "  " + y);
+                            //  alert(red + " " + green + "  " + blue);
+                            //    ctx.beginPath();
+                            //    alert("left" + pixelcolor2);
+                            left = [y, x];
+                            left_top_x = y;
+                            left_top_y = x;
+                            sessionStorage.left_point = left;
+                            ctx.arc(y, x, 7, 0, 2 * Math.PI, false);
+                            ctx.fillStyle = 'green';
+                            ctx.fill();
+                            break looping;
+                        }
+                    }
+                }
+            }
+        //looping2:
+        //    for (var y = 0; y < img.height; y++) {
+        //        for (var x = 0; x < img.width ; x++) {
+        //            red = pixeldata[((img.width * y) + x) * 4];
+        //            green = pixeldata[((img.width * y) + x) * 4 + 1];
+        //            blue = pixeldata[((img.width * y) + x) * 4 + 2];
+        //            alpha = pixeldata[((img.width * y) + x) * 4 + 3];
+        //            pixelcolor2 = new Array(red, green, blue);
+        //            if (!array_compare(pixelcolor2, white)) {
+        //                if (!array_compare(pixelcolor2, black)) {
+        //                    //  alert("topp:"+x + "  " + y);
+        //                    //   alert(red + " " + green + "  " + blue);
+        //                    // ctx.beginPath();
+        //                    topp = [x, y];
+        //                    sessionStorage.top_point = topp;
+        //                    //    alert("top" + pixelcolor2);
+        //                    //     ctx.arc(x, y, 7, 0, 2 * Math.PI, false);
+        //                    //      ctx.fillStyle = 'green';
+        //                    //      ctx.fill();
+        //                    break looping2;
+        //                }
+        //            }
+        //        }
+        //    }
+        //  scan();
+        //  startWorker();
+        //  alert(sum[0]);
+    }
+    function handleFiles(e) {
+        can = document.getElementById('canvas');
+        // oImage = $('img')[0];
+        img = new Image();
+        img.src = URL.createObjectURL(e.target.files[0]);
+
+        img.onload = function () {
+            sessionStorage.img_width = img.width;
+            sessionStorage.img_height = img.height;
+            can.width = img.width;
+            can.height = img.height;
+            ctx = can.getContext('2d');
+            //document.getElementById("canvas").style.width=img.width+"px";
+            //document.getElementById("canvas").style.height=img.height+"px";
+            ctx.drawImage(img, 0, 0);
+            //	ctx.strokeRect(50, 50, 50, 50);
+            imageData = ctx.getImageData(0, 0, img.width, img.height);
+            pixeldata = imageData.data;
+            var id = document.getElementById("test");
+           // highest_left();
+
+        }
+    }
+    function choice() {
+
+        startWorker();
+
+    }
+    var tableToExcel = (function () {
+        var uri = 'data:application/vnd.ms-excel;base64,'
+          , template = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>{worksheet}</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body><table>{table}</table></body></html>'
+          , base64 = function (s) { return window.btoa(unescape(encodeURIComponent(s))) }
+          , format = function (s, c) { return s.replace(/{(\w+)}/g, function (m, p) { return c[p]; }) }
+        return function (table, name) {
+            if (!table.nodeType) table = document.getElementById(table)
+            var ctx = { worksheet: name || 'Worksheet', table: table.innerHTML }
+            window.location.href = uri + base64(format(template, ctx))
+        }
+    })()
+    function rgb_Table() {
+        sumrgb = new Array();
+        var rgb_values = [];
+        var ko = 0;
+        //alert("facies" + ko);
+        for (var i = topy; i < img.height; i++) {
+
+            red = pixeldata[((img.width * i) + topx) * 4];
+            green = pixeldata[((img.width * i) + topx) * 4 + 1];
+            blue = pixeldata[((img.width * i) + topx) * 4 + 2];
+            var rt = [red, green, blue];
+            rt = JSON.stringify(rt);
+            //var a = sum.indexOf(rt);
+            if (rt != "[255,255,255]" && rt != "[0,0,0]") {
+                if (sumrgb.indexOf(rt) == -1) {
+                    rgb_values[ko] = [];
+                    sumrgb[ko] = rt;
+                    rgb_values[ko][0] = "Facies" + ko;
+                    rgb_values[ko][1] = red;
+                    rgb_values[ko][2] = green;
+                    rgb_values[ko][3] = blue;
+                    ko++;
+                }
+            }
+
+        }
+        addRGBToStorage(rgb_values);
+
+    }
+    function select_point() {
+        ctx.drawImage(img, 0, 0);
+        var xyz = 1;
+        $(document).on('mousedown', '#canvas', function (e) {
+            if (xyz == 1) {
+                topx = Math.floor(e.pageX - ($('#canvas').offset().left));
+                topy = Math.floor(e.pageY - ($('#canvas').offset().top));
+                for (var p = 0; p < topy; p++) {
+                    line[p] = " ";
+                }
+                for (var p = topy; p < img.height; p++) {
+                    red = pixeldata[((img.width * p) + topx) * 4];
+                    green = pixeldata[((img.width * p) + topx) * 4 + 1];
+                    blue = pixeldata[((img.width * p) + topx) * 4 + 2];
+                    var rt = [red, green, blue];
+                    rt = JSON.stringify(rt);
+                    line[p] = rt;
+                }
+                ctx.beginPath();
+                ctx.arc(topx, topy, 3, 0, 2 * Math.PI, false);
+                ctx.fillStyle = 'black';
+                ctx.fill();
+                xyz = 0;
+                highest_left();
+                rightmost_point();
+                rgb_Table();
+            }
+        });
+
+
+    }
+
+    //function rightmost_point() {
+    //    //ctx.drawImage(img, 0, 0);
+    //    var abc = 1;
+    //    $(document).on('mousedown', '#canvas', function (e) {
+    //        if (abc == 1) {
+    //            right_x = Math.floor(e.pageX - ($('#canvas').offset().left));
+    //            right_y = Math.floor(e.pageY - ($('#canvas').offset().top));
+    //            ctx.beginPath();
+    //            ctx.arc(right_x, right_y, 3, 0, 2 * Math.PI, false);
+    //            ctx.fillStyle = 'black';
+    //            ctx.fill();
+    //            abc = 0;
+    //        }
+    //    });
+    //}
+
+    function rightmost_point() {
+       // for (i = topx; i < img.width; i++) {
+            //alert("in1");
+            //pixel = 0;
+            //start_x = left_top_x;
+        //alert(start_x);
+         right_y = topy;
+         right_x = topx;
+            while (pixeldata[((img.width * right_y) + right_x) * 4] !== 0 && pixeldata[((img.width * right_y) + right_x) * 4 + 1] !== 0 && pixeldata[((img.width * right_y) + right_x) * 4 + 2] !== 0 && right_x<img.width) {
+                right_x++;
+                //alert("in2");
+            }
+            ctx.beginPath();
+                    ctx.arc(right_x, right_y, 3, 0, 2 * Math.PI, false);
+                    ctx.fillStyle = 'black';
+                    ctx.fill();
+
+    }
+
+    //function leftmost_point() {
+    //    //ctx.drawImage(img, 0, 0);
+    //    var abc = 1;
+    //    $(document).on('mousedown', '#canvas', function (e) {
+    //        if (abc == 1) {
+    //            left_top_x = Math.floor(e.pageX - ($('#canvas').offset().left));
+    //            left_top_y = Math.floor(e.pageY - ($('#canvas').offset().top));
+    //            ctx.beginPath();
+    //            ctx.arc(left_top_x, left_top_y, 3, 0, 2 * Math.PI, false);
+    //            ctx.fillStyle = 'black';
+    //            ctx.fill();
+    //            abc = 0;
+    //        }
+    //    });
+
+
+    //}
+    function myFunction() {
+        if (typeof myFunction.myStaticVar === 'undefined') {
+            myFunction.myStaticVar = 0;
+        }
+        myFunction.myStaticVar += 1;
+        return myFunction.myStaticVar;
+    };
+
+    function myFunction2() {
+        if (typeof myFunction2.myStaticVar === 'undefined') {
+            myFunction2.myStaticVar = 0;
+        }
+        myFunction2.myStaticVar += 1;
+        return myFunction2.myStaticVar;
+    };
+    function create_regions() {
+        //ctx.drawImage(img, 0, 0);
+        var id = myFunction();
+        //alert(id);
+        var div_id = "region" + id;
+        var section_id = "section" + id;
+        var top_id = "top" + id;
+        var bottom_id = "bottom" + id;
+        //var edit_id = "edit" + id;
+        var check_id = "check" + id;
+        var element = "<div id=" + div_id + "><input type=\"checkbox\" name=\"type\" id=" + check_id + " onClick=\"checkbox_checked();\"/><input type=\"text\" class=\"section\" id=" + section_id + " /><input type=\"text\" class=\"coords\" id=" + top_id + " /><input type=\"text\" class=\"coords\" id=" + bottom_id + " /></div>"
+        $('#sections').append(element);
+        section_locator(id);
+    }
+    function save_region() {
+        //ctx.drawImage(img, 0, 0);
+        var id = myFunction.myStaticVar;
+        //alert(id);
+        //   var section_id = "section" + id;
+        //  var top_id = "top" + id;
+        // var bottom_id = "bottom" + id;
+        //alert(section_id);
+        for (var t = 1; t <= id; t++) {
+            var section_id = "section" + t;
+            if ($('#' + section_id).length > 0) {
+                var top_id = "top" + t;
+                var bottom_id = "bottom" + t;
+                $("#" + section_id).prop('disabled', true);
+                $('#' + top_id).prop('disabled', true);
+                $('#' + bottom_id).prop('disabled', true);
+                if ($('#' + section_id).length > 0) {
+                    //alert(section_id);
+                    ctx.beginPath();
+                    ctx.moveTo(0, document.getElementById(top_id).value);
+                    ctx.lineTo(img.width, document.getElementById(top_id).value);
+                    ctx.stroke();
+                    ctx.font = 'italic 10pt Calibri';
+                    ctx.fillText('' + document.getElementById(section_id).value + 'top', 100, (document.getElementById(top_id).value - 20));
+                    ctx.beginPath();
+                    ctx.moveTo(0, document.getElementById(bottom_id).value);
+                    ctx.lineTo(img.width, document.getElementById(bottom_id).value);
+                    ctx.stroke();
+                    ctx.font = 'italic 10pt Calibri';
+                    ctx.fillText('' + document.getElementById(section_id).value + 'bottom', 100, (document.getElementById(bottom_id).value - 20));
+                }
+                else {
+                    // alert(section_id + "doesn't exists");
+                }
+            }
+        }
+    }
+
+    function delete_region() {
+        //alert("in");
+        $("input:checkbox[name=type]:checked").each(function () {
+            var id = $(this).attr("id");
+            //alert(id);
+            //id.substring(id.length - 2, 1);
+            id = (id.substring(id.length - 1));
+            var div_id = "region" + id;
+            var element = document.getElementById(div_id);
+            //alert(element);
+            element.parentNode.removeChild(element);
+            //myFunction1.myStaticVar;
+            save_region();
+        });
+    }
+    function section_locator(id) {
+        var click_count = 0;
+        var section_x1;
+        var section_y1;
+        var section_x2;
+        var section_y2;
+        $(document).on('mousedown', '#canvas', function (e) {
+            if (click_count == 0) {
+                section_x1 = e.pageX - ($('#canvas').offset().left);
+                section_y1 = e.pageY - ($('#canvas').offset().top);
+                //         ctx.font = 'italic 20pt Calibri';
+                //         ctx.fillText('Hello World!', 100, (section_y1-20));
+                ctx.beginPath();
+                ctx.moveTo(0, section_y1);
+                ctx.lineTo(img.width, section_y1);
+                ctx.stroke();
+                click_count = 1;
+                // alert(section_x1 + " " + section_y1);
+            }
+            else if (click_count == 1) {
+                section_x2 = e.pageX - ($('#canvas').offset().left);
+                section_y2 = e.pageY - ($('#canvas').offset().top);
+                //        ctx.font = 'italic 20pt Calibri';
+                //         ctx.fillText('Hello World!', 100, (section_y2 - 20));
+                ctx.beginPath();
+                ctx.moveTo(0, section_y2);
+                ctx.lineTo(img.width, section_y2);
+                ctx.stroke();
+                if (section_y1 > section_y2) {
+                    var t = section_y1;
+                    section_y1 = section_y2;
+                    section_y2 = t;
+                }
+                var topid = "top" + id;
+                var bottomid = "bottom" + id;
+                //alert(topid);
+                //var y1 = String(document.getElementById(topid));
+                //var y2 = String(document.getElementById(bottomid));
+                //alert(y1);
+                document.getElementById(topid).value = Math.floor(section_y1);
+                document.getElementById(bottomid).value = Math.floor(section_y2);
+                click_count = 2;
+                //alert(section_x2 + " " + section_y2);
+            }
+        });
+
+    }
+    function checkbox_checked() {
+        var checked_count = $("input:checkbox:checked").length;
+        //alert(checked_count);
+        if (checked_count == 0) {
+            ctx.drawImage(img, 0, 0);
+            save_region();
+        }
+        else if (checked_count == 1) {
+            ctx.drawImage(img, 0, 0);
+            $("input:checkbox[name=type]:checked").each(function () {
+                var id = $(this).attr("id");
+                id = (id.substring(id.length - 1));
+                var top_id = "top" + id;
+                var bottom_id = "bottom" + id;
+                var section_id = "section" + id;
+                var top1 = document.getElementById(top_id).value;
+                var bottom1 = document.getElementById(bottom_id).value;
+                var section = document.getElementById(section_id).value;
+                //  alert(x1 + "  " + y1);
+                ctx.beginPath();
+                ctx.moveTo(0, top1);
+                ctx.lineTo(img.width, top1);
+                ctx.stroke();
+                ctx.font = 'italic 10pt Calibri';
+                ctx.fillText('' + section + 'top', 100, (document.getElementById(top_id).value - 20));
+                ctx.beginPath();
+                ctx.moveTo(0, bottom1);
+                ctx.lineTo(img.width, bottom1);
+                ctx.stroke();
+                ctx.font = 'italic 10pt Calibri';
+                ctx.fillText('' + section + 'bottom', 100, (document.getElementById(bottom_id).value - 20));
+            });
+        }
+        else {
+            //ctx.drawImage(img, 0, 0);
+            $("input:checkbox[name=type]:checked").each(function () {
+                var id = $(this).attr("id");
+                id = (id.substring(id.length - 1));
+                //alert(id);
+                var top_id = "top" + id;
+                var bottom_id = "bottom" + id;
+                var section_id = "section" + id;
+                var top1 = document.getElementById(top_id).value;
+                var bottom1 = document.getElementById(bottom_id).value;
+                var section = document.getElementById(section_id).value;
+                //  alert(x1 + "  " + y1);
+                ctx.beginPath();
+                ctx.moveTo(0, top1);
+                ctx.lineTo(img.width, top1);
+                ctx.stroke();
+                ctx.font = 'italic 10pt Calibri';
+                ctx.fillText('' + section + 'top', 100, (document.getElementById(top_id).value - 20));
+                ctx.beginPath();
+                ctx.moveTo(0, bottom1);
+                ctx.lineTo(img.width, bottom1);
+                ctx.stroke();
+                ctx.font = 'italic 10pt Calibri';
+                ctx.fillText('' + section + 'bottom', 100, (document.getElementById(bottom_id).value - 20));
+            });
+        }
+    }
+    function analyze_sections() {
+        $('#section_results').empty();
+        $('#section_results').append("<table id=\"sections_table\" border=\"1\">");
+        //var checked_count1 = $("input:checkbox:checked").length;
+        var checked_count1 = $("input:checkbox[name=type]:checked").length;
+        if (checked_count1 > 0) {
+            $("input:checkbox[name=type]:checked").each(function () {
+                var id = $(this).attr("id");
+                id = (id.substring(id.length - 1));
+                var top_id = "top" + id;
+                var bottom_id = "bottom" + id;
+                var top1 = document.getElementById(top_id).value;
+                var bottom1 = document.getElementById(bottom_id).value;
+                sections_results(id, parseInt(top1), parseInt(bottom1));
+            });
+            $('#section_results').append("</table>");
+            $('#analyze_sections_export').prop('disabled', false);
+        }
+        else {
+            var id = myFunction.myStaticVar;
+            for (var i = 1; i <= id; i++) {
+                var topid = "top" + i;
+                var bottomid = "bottom" + i;
+                var top3 = document.getElementById(topid).value;
+                var bottom3 = document.getElementById(bottomid).value;
+                sections_results(i, parseInt(top3), parseInt(bottom3));
+            }
+            $('#section_results').append("</table>");
+            $('#analyze_sections_export').prop('disabled', false);
+        }
+    }
+    function analyze_sections_pixels() {
+        $('#section_results').empty();
+        $('#section_results').append("<table id=\"sections_table\" border=\"1\">");
+        //var checked_count1 = $("input:checkbox:checked").length;
+        var checked_count1 = $("input:checkbox[name=type]:checked").length;
+        if (checked_count1 > 0) {
+            $("input:checkbox[name=type]:checked").each(function () {
+                var id = $(this).attr("id");
+                id = (id.substring(id.length - 1));
+                var top_id = "top" + id;
+                var bottom_id = "bottom" + id;
+                var top1 = document.getElementById(top_id).value;
+                var bottom1 = document.getElementById(bottom_id).value;
+                sections_results_pixels(id, parseInt(top1), parseInt(bottom1));
+            });
+            $('#section_results').append("</table>");
+        }
+        else {
+            var id = myFunction.myStaticVar;
+            for (var i = 1; i <= id; i++) {
+                var topid = "top" + i;
+                var bottomid = "bottom" + i;
+                var top3 = document.getElementById(topid).value;
+                var bottom3 = document.getElementById(bottomid).value;
+                sections_results_pixels(i, parseInt(top3), parseInt(bottom3));
+            }
+            $('#section_results').append("</table>");
+        }
+    }
+
+    function sections_results(i, top, bottom) {
+        //alert(i);
+        var id = i;
+        var section_id = "section" + id;
+        section_id = document.getElementById(section_id).value;
+        //var i = 0;
+        var per = new Array();
+        var percentage = new Array(sum.length);
+        for (var u = 0; u < percentage.length; u++) {
+            percentage[u] = 0;
+        }
+        //alert(top + "  " + bottom);
+        //alert(top < bottom);
+        for (var it = top; it < bottom; it++) {
+            //  alert("chsvj");
+            red = pixeldata[((img.width * it) + topx) * 4];
+            green = pixeldata[((img.width * it) + topx) * 4 + 1];
+            blue = pixeldata[((img.width * it) + topx) * 4 + 2];
+
+            //var rt = red + (2 * green) + (3 * blue);
+            var rt = [red, green, blue];
+            rt = JSON.stringify(rt);
+            //  var rt = line[i];
+            //  if (red == 255 && green == 204 && blue == 204) {
+            //    alert("testing");
+            var a = sum.indexOf(rt);
+            //    alert(a);
+            //}
+            if (a != -1) {
+                percentage[a]++;
+            }
+
+        }   
+        // results = percentage;
+        var total = 0;
+        for (var i = 0; i < percentage.length; i++) {
+            total = total + percentage[i];
+            per.push(percentage[i]);
+        }
+        //$('#results').empty();
+        $('#sections_table').append("<tr><td><b>" + section_id + "</b></td></tr><tr><td><b>Name</b></td><td><b>Percentage</b></td></tr>");
+        for (var i = 0; i < per.length; i++) {
+            $('#sections_table').append("<tr><td>" + name[i].replace(/[\[\]']+/g, '') + "</td><td>" + 100 * (per[i] / total) + "</td></tr>");
+        }
+        //$('#results').append("</table>");
+    }
+    function sections_results_pixels(i, top, bottom) {
+        //alert(i);
+        var thickness_sum = 0;
+        var id = i;
+        var section_id = "section" + id;
+        section_id = document.getElementById(section_id).value;
+        //var scaling_factor = document.getElementById("scaling_factor").value;
+        //var scale = 1 / scaling_factor;
+        //var i = 0;
+        var per = new Array();
+        var percentage = new Array(sum.length);
+        for (var u = 0; u < percentage.length; u++) {
+            percentage[u] = 0;
+        }
+        //alert(top + "  " + bottom);
+        //alert(top < bottom);
+        for (var it = top; it < bottom; it++) {
+            //  alert("chsvj");
+            red = pixeldata[((img.width * it) + topx) * 4];
+            green = pixeldata[((img.width * it) + topx) * 4 + 1];
+            blue = pixeldata[((img.width * it) + topx) * 4 + 2];
+
+            //var rt = red + (2 * green) + (3 * blue);
+            var rt = [red, green, blue];
+            rt = JSON.stringify(rt);
+            //  var rt = line[i];
+            //  if (red == 255 && green == 204 && blue == 204) {
+            //    alert("testing");
+            var a = sum.indexOf(rt);
+            //    alert(a);
+            //}
+            if (a != -1) {
+                percentage[a]++;
+            }
+
+        }
+        // results = percentage;
+        //var total = 0;
+        for (var i = 0; i < percentage.length; i++) {
+            // total = total + percentage[i];
+            per.push(percentage[i]);
+        }
+        //$('#results').empty();
+        $('#sections_table').append("<tr><td><b>" + section_id + "</b></td></tr><tr><td><b>Name</b></td><td><b>Pixels</b></td><td><b>Thickness</b></td></tr>");
+        for (var i = 0; i < per.length; i++) {
+            $('#sections_table').append("<tr><td>" + name[i].replace(/[\[\]']+/g, '') + "</td><td>" + (per[i]) + "</td><td>" + per[i] / scale + "</td></tr>");
+            thickness_sum = thickness_sum + (per[i] / scale)
+        }
+        $('#sections_table').append("<tr><td></td><td></td><td><b>" + thickness_sum + "</b></td></tr>");
+        //$('#results').append("</table>");
+    }
+    function scaling_factor() {
+        var pixels = img.height - topy;
+        var image_height = document.getElementById("image_height").value;
+        scale = pixels / image_height;
+        document.getElementById("scaling_factor").value = Math.floor(scale);
+
+    }
+
+    function create_grains() {
+        //ctx.drawImage(img, 0, 0);
+        var id = myFunction2();
+        var div_id = "grain_region" + id;
+        var grain_id = "grain" + id;
+        var top_id = "x" + id;
+        var y_id = "y" + id;
+        var bottom_id = "distance" + id;
+        var select_id = "select" + id;
+        var scale_id = "scale" + id;
+        var element = "<div id=" + div_id + "><input type=\"checkbox\" name=\"grains_checkbox\" id=" + select_id + " onClick=\"checkbox_checked();\"/><input type=\"text\" class=\"section\" id=" + grain_id + " /><input type=\"text\" class=\"coords\" id=" + top_id + " /><input type=\"text\" class=\"coords\" id=" + y_id + " /><input type=\"text\" class=\"coords\" id=" + bottom_id + " /><input type=\"text\" class=\"coords\" id=" + scale_id + " /></div>"
+        $('#grains').append(element);
+        grain_locator(id);
+    }
+
+
+    function grain_locator(id) {
+        var click_count = 0;
+        var section_x1;
+        var section_y1;
+        $(document).on('mousedown', '#canvas', function (e) {
+            if (click_count == 0) {
+                section_x1 = e.pageX - ($('#canvas').offset().left);
+                section_y1 = e.pageY - ($('#canvas').offset().top);
+                ctx.beginPath();
+                ctx.moveTo(section_x1, section_y1);
+                ctx.lineTo(section_x1, img.height);
+                ctx.stroke();
+                var topid = "x" + id;
+                var bottomid = "y" + id;
+                document.getElementById(topid).value = Math.floor(section_x1);
+                document.getElementById(bottomid).value = Math.floor(section_y1);
+                click_count = 2;
+            }
+        });
+
+    }
+    function save_grains() {
+        //ctx.drawImage(img, 0, 0);
+        var id = myFunction2.myStaticVar;
+        Gscale_array = new Array();
+        Gscale_obj = {};
+        //alert(id);
+        for (var t = 1; t <= id; t++) {
+            //alert(t);
+            
+            var grain_id = "grain" + t;
+            if ($('#' + grain_id).length > 0)
+            {
+                var top_id = "x" + t;
+                var distance_id = "distance" + t;
+                var y_id = "y" + t;
+                var scale_id = "scale" + t;
+                //alert(scale_id);
+                var length = (right_x - parseInt(document.getElementById(top_id).value));
+               // alert("length" + length);
+                document.getElementById(scale_id).value = (document.getElementById(distance_id).value) / length;
+                //if (length < (first_geometric_pixel))
+                {
+                   //alert("In2");
+                Gscale_obj[length] = parseFloat(document.getElementById(scale_id).value);
+                Gscale_array.push(parseInt(length));
+            }
+            //right_x
+            $("#" + grain_id).prop('disabled', true);
+            $('#' + top_id).prop('disabled', true);
+            $('#' + scale_id).prop('disabled', true);
+            $('#' + distance_id).prop('disabled', true);
+            //if ($('#' + section_id).length > 0) {
+            //alert(section_id);
+            ctx.beginPath();
+            ctx.moveTo(document.getElementById(top_id).value, document.getElementById(y_id).value);
+            ctx.lineTo(document.getElementById(top_id).value, img.height);
+            ctx.stroke();
+            //ctx.font = 'italic 10pt Calibri';
+            // ctx.fillText('' + document.getElementById(section_id).value + 'top', 100, (document.getElementById(top_id).value - 20));
+            //ctx.beginPath();
+            //ctx.moveTo(0, document.getElementById(bottom_id).value);
+            //ctx.lineTo(img.width, document.getElementById(bottom_id).value);
+            //ctx.stroke();
+            //ctx.font = 'italic 10pt Calibri';
+            //ctx.fillText('' + document.getElementById(section_id).value + 'bottom', 100, (document.getElementById(bottom_id).value - 20));
+            //}
+            //else {
+            // alert(section_id + "doesn't exists");
+            //}
+        }
+        }
+        Gscale_array.sort(sortNumber);
+        for (var i = 0; i < Gscale_array.length; i++) {
+           // alert(Gscale_array[i]);
+        }
+    }
+
+    function delete_grains() {
+        $("input:checkbox[name=grains_checkbox]:checked").each(function () {
+            var id = $(this).attr("id");
+            id = (id.substring(id.length - 1));
+            var div_id = "grain_region" + id;
+            var element = document.getElementById(div_id);
+            element.parentNode.removeChild(element);
+            save_grains();
+            //myFunction2.myStaticVar - 1;
+        });
+    }
+
+    function analyze_grains() {
+        $('#grain_results').empty();
+        $('#grain_results').append("<table id=\"grain_results_table\" border=\"1\">");
+        //var checked_count1 = $("input:checkbox:checked").length;
+        //var checked_count1 = $("input:checkbox[name=grains_checkbox]:checked").length;
+        var checked_count1 = $("input:checkbox[name=type]:checked").length;
+        if (checked_count1 > 0) {
+            //$("input:checkbox[name=grains_checkbox]:checked").each(function () {
+            $("input:checkbox[name=type]:checked").each(function () {
+                var id = $(this).attr("id");
+               // alert(id);
+                //id = (id.substring(id.length - 1));
+                id = (id.substring(5)); 
+                //alert(right_x);
+                var top_id = "top" + id;
+                //alert(top_id);
+                //alert(document.getElementById(top_id).value);
+                var bottom_id = "bottom" + id;
+                var top1 = document.getElementById(top_id).value;
+                var bottom1 = document.getElementById(bottom_id).value;
+                alert(bottom1);
+                results_grains(id, parseInt(top1), parseInt(bottom1));
+            });
+            $('#grain_results').append("</table>");
+            $('#grain_results_export').prop('disabled', false);
+        }
+        //else {
+        //    var id = myFunction.myStaticVar;
+        //    for (var i = 1; i <= id; i++) {
+        //        var topid = "top" + i;
+        //        var bottomid = "bottom" + i;
+        //        var top3 = document.getElementById(topid).value;
+        //        var bottom3 = document.getElementById(bottomid).value;
+        //        sections_results(i, parseInt(top3), parseInt(bottom3));
+        //    }
+        //    $('#grains').append("</table>");
+        //}
+    }
+    function results_grains(id,topid,bottomid) {
+        var i;
+        var factor = 1;
+        var pixel = 0;
+        var start_x;
+        var rgb, facies_name, red, green, blue, index;
+        var a = {};
+        var section_id = "section" + id;
+        var top_id = topid;
+        var bottom_id = bottomid;
+        section_id = document.getElementById(section_id).value;
+        //$('#grain_results_table').append("<tr><td>" + section_id + "</td><td></td></tr>");
+        //$('#grain_results_table').append("<tr><td>" + section_id + "</td><td>pixels</td><td>Scale</td><td>Grain Size</td></tr>");
+        $('#grain_results_table').append("<tr><td>" + section_id + "</td><td>pixels</td><td>Grain Size</td></tr>");
+        //top_id = document.getElementById(top_id).value;
+        //bottom_id = document.getElementById(bottom_id).value;
+        for (i = 0; i < name.length; i++) {
+            a[name[i]] = [];
+        }
+        for (i = top_id; i < bottom_id; i++) {
+            pixel = 0;
+            start_x = left_top_x;
+            while (pixeldata[((img.width * i) + start_x) * 4] == 255 && pixeldata[((img.width * i) + start_x) * 4 + 1] == 255 && pixeldata[((img.width * i) + start_x) * 4 + 2] == 255 && start_x <= right_x) {
+                start_x++;
+            }
+            if (start_x != left_top_x) {
+                pixel = right_x - start_x;
+                red = pixeldata[((img.width * i) + topx) * 4];
+                green = pixeldata[((img.width * i) + topx) * 4 + 1];
+                blue = pixeldata[((img.width * i) + topx) * 4 + 2];
+                rgb = [red, green, blue];
+                rgb = JSON.stringify(rgb);
+                index = sum.indexOf(rgb);
+                facies_name = name[index];
+                if (typeof a[facies_name] != 'undefined') {
+                    a[facies_name].push(pixel);
+                }
+            }
+        }
+        var grain_table;
+        // var grain_table = "<table id=\"grain_results_table\">";
+        for (var value in a) {
+            for (i = 0; i < a[value].length; i++) {
+              // alert(a[value][i]+"   "+first_geometric_pixel);
+                //alert(Gscale_array.length);
+                if (a[value][i] > first_logarthmic_pixel) {
+                    //alert("IN");
+                    //factor = geometric_series_value(a[value][i]);
+                    factor = logarthmic_series_value(a[value][i]);
+                    factor=factor/(a[value][i]);
+                    //alert(factor);
+                    //break;
+                }
+                else{
+                    for (var k = 0; k < Gscale_array.length; k++) {
+                        //if (a[value][i] > Gscale_array[k] && a[value][i] < Gscale_array[k]) {
+                        //    factor = Gscale_obj[Gscale_array[k]];
+                        //}
+                        //alert(a[value][i]);
+                        //alert(Gscale_array[k]);
+                    
+                    if (a[value][i] <= Gscale_array[k]) {
+                        factor = Gscale_obj[parseFloat(Gscale_array[k])];
+                        break;
+                        // alert(factor);
+                    }
+                        //if (a[value][i] == Gscale_array[k]) {
+                        //  factor = Gscale_obj[Gscale_array[k]];
+                        //break;
+                        //   alert(factor);
+                        // }
+
+                    }
+                }
+               // alert(a[value][i]+'  '+factor);
+                //alert(factor);
+                //$('#grain_results_table').append("<tr><td>" + value.replace(/[\[\]']+/g, '') + "</td><td>" + a[value][i] + "</td><td>" + factor + "</td><td>" + a[value][i] * factor + "</td></tr>");
+                //$('#grain_results_table').append("<tr><td>" + value.replace(/[\[\]']+/g, '') + "</td><td>" + a[value][i] + "</td><td>" + factor + "</td>");
+                $('#grain_results_table').append("<tr><td>" + value.replace(/[\[\]']+/g, '') + "</td><td>" + a[value][i] + "</td><td>" + a[value][i] * factor + "</td></tr>");
+                //grain_table = grain_table + str;
+            }
+        }
+        //grain_table = grain_table + "</table>";
+       // $('#grains').append(grain_table);
+
+    }
+    function sortNumber(a, b) {
+
+        return a - b;
+    }
+    //function geometric_series_scale() {
+    //    var geometric_points = new Array();
+    //    var geometric_pixels = new Array();
+    //   // alert($("input:checkbox[name=grains_checkbox]:checked").length);
+    //    if ($("input:checkbox[name=grains_checkbox]:checked").length == 2) {
+    //        $("input:checkbox[name=grains_checkbox]:checked").each(function () {
+    //            var id = $(this).attr("id");
+    //            id = (id.substring(6));
+    //            //alert(id);
+    //            var x_id = "x" + id;
+    //            var distance_id = "distance" + id;
+    //            var pixel = right_x - parseInt((document.getElementById(x_id).value));
+    //            //geometric_pixels.push((document.getElementById(x_id).value));
+    //            geometric_pixels.push(pixel);
+    //            geometric_points.push(parseFloat((document.getElementById(distance_id).value)));
+    //            //geometric_points.push(pixel);
+    //        })
+    //    }
+    //    else { alert("Select only two scales"); }
+    //    //alert(geometric_pois[0] + "  " + geometric_pixels[1]);
+    //    //geometric_pixels.sort();
+    //    //geometric_points.sort();
+    //    //alert(geometric_pixels[0] + "  " + geometric_pixels[1]);
+    //    //var n = Math.abs((geometric_pixels[1] - geometric_pixels[0]) - 1);
+    //    if (geometric_pixels[1] > geometric_pixels[0]) {
+    //        first_geometric_pixel = geometric_pixels[0];
+    //        var n = Math.abs((geometric_pixels[1] - geometric_pixels[0]) - 1);
+
+    //    }
+    //    else {
+    //        first_geometric_pixel = geometric_pixels[1];
+    //        var n = Math.abs((geometric_pixels[0] - geometric_pixels[1]) - 1);
+    //    }
+    //    if (geometric_points[1] > geometric_points[0])
+    //    {
+    //        first_geometric_scale = geometric_points[0];
+    //        var ka=(geometric_points[1] / geometric_points[0]);
+
+    //    }
+    //    else {
+    //        first_geometric_scale = geometric_points[1];
+    //        var ka = (geometric_points[0] / geometric_points[1]);
+    //    }
+    //    //var ka = (geometric_points[1] / geometric_points[0]);
+        
+    //    geometric_r = Math.pow(ka, (1 / (n - 1)));
+    //   // alert(n + "   " + ka + "   " + geometric_r);
+    //    //first_geometric_scale = geometric_points[0];
+    //    //first_geometric_pixel = geometric_pixels[0];
+    //   alert(geometric_r + "      " + first_geometric_scale+"    "+first_geometric_pixel);  
+    //}
+    //function geometric_series_value(pixeli) {
+    //    //pixeli = right_x - pixeli;
+    //    //alert(pixeli);
+    //    var n1 = (pixeli - first_geometric_pixel) - 1;
+    //    //alert((first_geometric_scale * Math.pow(geometric_r, n1)));
+    //    return (first_geometric_scale * Math.pow(geometric_r, n1));
+    //}
+    function logarthmic_series_scale() {
+        var logarthmic_points = new Array();
+        var logarthmic_pixels = new Array();
+        // alert($("input:checkbox[name=grains_checkbox]:checked").length);
+        if ($("input:checkbox[name=grains_checkbox]:checked").length == 2) {
+            $("input:checkbox[name=grains_checkbox]:checked").each(function () {
+                var id = $(this).attr("id");
+                id = (id.substring(6));
+                //alert(id);
+                var x_id = "x" + id;
+                var distance_id = "distance" + id;
+                var pixel = right_x - parseInt((document.getElementById(x_id).value));
+                //var pixel = parseInt((document.getElementById(x_id).value));
+                //geometric_pixels.push((document.getElementById(x_id).value));
+                logarthmic_pixels.push(pixel);
+                logarthmic_points.push(parseFloat((document.getElementById(distance_id).value)));
+                //geometric_points.push(pixel);
+            })
+        }
+        else { alert("Select only two scales"); }
+        //alert(geometric_pois[0] + "  " + geometric_pixels[1]);
+        //geometric_pixels.sort();
+        //geometric_points.sort();
+        //alert(geometric_pixels[0] + "  " + geometric_pixels[1]);
+        //var n = Math.abs((geometric_pixels[1] - geometric_pixels[0]) - 1);
+        if (logarthmic_pixels[1] > logarthmic_pixels[0]) {
+            first_logarthmic_pixel = logarthmic_pixels[0];
+            var n = Math.abs((logarthmic_pixels[1] - logarthmic_pixels[0]));
+
+        }
+        else {
+            first_logarthmic_pixel = logarthmic_pixels[1];
+            var n = Math.abs((logarthmic_pixels[0] - logarthmic_pixels[1]));
+        }
+        //var n = Math.abs((logarthmic_pixels[0] - logarthmic_pixels[1]));
+        var logarthmic_points1 = Math.log(logarthmic_points[1]) / Math.log(2);
+        var logarthmic_points0 = Math.log(logarthmic_points[0]) / Math.log(2);
+        if (logarthmic_points[1] > logarthmic_points[0]) {
+            first_logarthmic_scale = logarthmic_points[0];
+            //var ka = (geometric_points[1] / geometric_points[0]);
+            var ka = (logarthmic_points1 - logarthmic_points0);
+
+        }
+        else {
+            first_logarthmic_scale = logarthmic_points[1];
+            var ka = (logarthmic_points0 - logarthmic_points1);
+        }
+        //var ka = (geometric_points[1] / geometric_points[0]);
+
+        //geometric_r = Math.pow(ka, (1 / (n - 1)));
+        alert(ka);
+        alert(n);
+        logarthmic_r = ka / n;
+        // alert(n + "   " + ka + "   " + geometric_r);
+        //first_geometric_scale = geometric_points[0];
+        //first_geometric_pixel = geometric_pixels[0];
+        alert(logarthmic_r + "      " + first_logarthmic_scale);
+    }
+    function logarthmic_series_value(pixeli) {
+        //pixeli = right_x - pixeli;
+        //alert(pixeli);
+        var n1 = (pixeli - first_logarthmic_pixel);
+        //alert((first_geometric_scale * Math.pow(geometric_r, n1)));
+        //return (first_geometric_scale * Math.pow(geometric_r, n1));
+        //alert(first_logarthmic_scale + n1 * logarthmic_r);
+        return (first_logarthmic_scale + n1 * logarthmic_r);
+    }
+</script>
+<style>
+       input[type="text"] 
+      {
+         width: auto;
+         border: 1px solid #CCC;
+      }
+       
+   /*#sections_table{
+        visibility:hidden;
+    }
+    
+   #results_table {
+        visibility:hidden;
+    }*/  
+    /*#grain_results_table {
+        visibility:hidden;
+    }*/
+     #wrapper {
+        width: 100%;
+        overflow: hidden;
+    }
+
+    #fileLoader {
+        float: left;
+        width: 49%;
+        height: 100%;
+    }
+
+    #imageFrame {
+        float: right;
+        width: 49.1%;
+        height: 100%;
+        overflow: scroll;
+    }
+
+    #console {
+        float: left;
+        width: 19%;
+        height: 100%;
+    }
+
+    #colorpicker {
+        width: 100%;
+        overflow: scroll;
+    }
+
+    #rgbtable {
+        width: 100%;
+    }
+</style>
+<body>
+    <h1>File Load</h1>
+    <div id="wrapper" class="maindivs">
+        <div id="fileLoader" class="maindivs">
+            <input type="file" id="input" />
+            <!--<button onclick="rgb_Table()">Populate Table</button>-->
+            @*<button onclick="initDraw()"> Select Region</button>
+                <button onclick="clearRegion()"> Clear Region</button>*@
+            <button onclick="select_point()">Topmost Point</button>
+            @*<button onclick="rightmost_point()">Rightmost Point</button>
+            <button onclick="leftmost_point()">Leftmost Point</button>*@
+            @*<input type="button" onclick="tableToExcel('results_table', 'W3C Example Table')" value="Export to Excel">*@
+            <button onclick="choice()">Analyze</button>
+
+            <div id="colorpicker">
+                <table id="rgbtable" border="1"></table>
+            </div>
+            <button type="button" onclick="editTable();">EDIT</button>
+            <button type="button" onclick="saveTable();">SAVE</button>
+            <button type="button" onclick="addNewColor();">NEW</button>
+            <button type="button" onclick="deleteColor();">DELETE</button>
+            <br /><br /><br />
+            <div>
+
+
+
+                <div id="regions">
+                    <h1>Sections</h1>
+                    <div id="region_header">
+                        <label>Image Height</label> <input type="text" id="image_height" style="width:45px" />
+                        <button type="button" onclick="scaling_factor();">Scaling Factor</button>
+                        <input type="text" id="scaling_factor" style="width:45px" /><br />
+                        <button type="button" onclick="create_regions();">NEW</button>
+                        <button type="button" onclick="delete_region();">DELETE</button>
+                        <button type="button" onclick="save_region();">SAVE</button>
+                        <button type="button" onclick="analyze_sections();">Analyze</button>
+                        <button type="button" onclick="analyze_sections_pixels();">Analyze Thickness</button>
+                        <button type="button" onclick="analyze_grains();">Analyze Grain Size</button>
+                    </div>
+                    <div id="sections"></div>
+                </div>
+
+                <div id="grain_types">
+                    <h1>Grain Types</h1>
+                    <div id="grain_header">
+                        <button type="button" onclick="create_grains();">NEW</button>
+                        <button type="button" onclick="delete_grains();">DELETE</button>
+                        <button type="button" onclick="save_grains();">SAVE</button>
+                        @*<button type="button" onclick="geometric_series_scale();">Geometric Scale</button>*@
+                        <button type="button" onclick="logarthmic_series_scale();">Logarthmic Scale</button>
+                        @*<button type="button" onclick="analyze_grains();">Analyze</button>
+                        <button type="button" onclick="analyze_grains_details();">Analyze Details</button>*@
+                    </div>
+                    <div id="grains"></div>
+                </div>
+
+               
+                <h1>Results</h1>
+                <input type="button" onclick="tableToExcel('results_table', 'W3C Example Table')" value="Export to Excel" id="analyze_results_export" disabled>
+
+                <div id="results">
+
+
+                </div>
+                <div id="Section Results">
+                    <h1> Section Results</h1>
+                    <input type="button" onclick="tableToExcel('sections_table', 'W3C Example Table')" value="Export to Excel" disabled id="analyze_sections_export">
+                    <div id="section_results"></div>
+                </div>
+                <div id="Grain Results">
+                    <h1> Grain Results</h1>
+                    <input type="button" onclick="tableToExcel('grain_results_table', 'W3C Example Table')" value="Export to Excel" disabled id="grain_results_export">
+                    <div id="grain_results"></div>
+                </div>
+            </div>
+
+        </div>
+        <div id="imageFrame" class="maindivs">
+
+            <canvas id="canvas" style="border:1px solid #d3d3d3;"> </canvas>
+        </div>
+    </div>
+</body>

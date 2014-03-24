@@ -1,0 +1,49 @@
+﻿@{
+    ViewBag.Title = "Most";
+}
+<script type="text/javascript">
+window.onload = function() {
+    var input = document.getElementById('input');
+    input.addEventListener('change', handleFiles);
+}
+function handleFiles(e) {
+    var can = document.getElementById('canvas');
+	var img = new Image;
+	img.src = URL.createObjectURL(e.target.files[0]);
+	
+	img.onload = function() {
+	
+	can.width=img.width;
+	can.height=img.height;
+	var ctx=can.getContext('2d');
+	//document.getElementById("canvas").style.width=img.width+"px";
+	//document.getElementById("canvas").style.height=img.height+"px";
+    ctx.drawImage(img,0,0);
+	var imageData = ctx.getImageData(0, 0, img.width, img.height);
+    var data = imageData.data;
+	var id= document.getElementById("test");
+	for(var y = 0; y < 2; y++) {
+          // loop through each column
+		  
+        for(var x = 0; x < 3; x++) {
+		  
+            var red = data[((img.width * y) + x) * 4];
+            var green = data[((img.width * y) + x) * 4 + 1];
+            var blue = data[((img.width * y) + x) * 4 + 2];
+            var alpha = data[((img.width * y) + x) * 4 + 3];
+			alert(red + "  " +green+ "  " +blue);
+        }
+    }
+}
+}
+function readvalues() {
+		
+}
+
+</script>
+<body>
+<h1>Test</h1>
+<input type="file" id="input"/>
+<canvas id="canvas" style="border:1px solid #d3d3d3;"> </canvas>
+</body>
+
